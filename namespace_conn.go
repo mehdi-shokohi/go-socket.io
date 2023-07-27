@@ -20,7 +20,7 @@ type Namespace interface {
 
 	Namespace() string
 	Emit(eventName string, v ...interface{})
-
+	EmitByNameSpace(namespace, eventName string, v ...interface{})
 	Join(room string)
 	Leave(room string)
 	LeaveAll()
@@ -90,7 +90,36 @@ func (nc *namespaceConn) Emit(eventName string, v ...interface{}) {
 
 	nc.conn.write(header, args...)
 }
+func (nc *namespaceConn) EmitByNameSpace(namespace, eventName string, v ...interface{}) {
+	header := parser.Header{
+		Type: parser.Event,
+	}
 
+	header.Namespace = namespace
+	if l := len(v); l > 0 {
+		last := v[l-1]
+		lastV := reflect.TypeOf(last)
+
+		if lastV.Kind() == reflect.Func {
+			f := newAckFunc(last)
+
+			header.ID = nc.conn.nextID()
+			header.NeedAck = true
+
+			nc.ack.Store(header.ID, f)
+			v = v[:l-1]
+		}
+	}
+
+	args := make([]reflect.Value, len(v)+1)
+	args[0] = reflect.ValueOf(eventName)
+
+	for i := 1; i < len(args); i++ {
+		args[i] = reflect.ValueOf(v[i-1])
+	}
+
+	nc.conn.write(header, args...)
+}
 func (nc *namespaceConn) Join(room string) {
 	nc.broadcast.Join(room, nc)
 }
