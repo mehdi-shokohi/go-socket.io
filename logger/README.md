@@ -38,7 +38,7 @@ Override internal and get logger:
 import (
 	...
 	
-    "github.com/googollee/go-socket.io/logger"
+    "github.com/thisismz/go-socket.io/logger"
 )
 
 

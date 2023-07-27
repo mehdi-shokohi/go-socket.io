@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/googollee/go-socket.io/engineio/session"
-	"github.com/googollee/go-socket.io/logger"
+	"github.com/thisismz/go-socket.io/engineio/session"
+	"github.com/thisismz/go-socket.io/logger"
 )
 
 const (
