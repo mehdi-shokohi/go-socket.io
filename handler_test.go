@@ -1,122 +1,133 @@
 package socketio
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/thisismz/go-socket.io/v4/parser"
 )
 
-func TestNewEventFunc(t *testing.T) {
-	tests := []struct {
-		f        interface{}
-		ok       bool
-		argTypes []interface{}
-	}{
-		{1, false, []interface{}{}},
-		{func() {}, false, []interface{}{}},
-		{func(int) {}, false, []interface{}{}},
-		{func() error { return nil }, false, []interface{}{}},
+func TestNamespaceHandler(t *testing.T) {
+	should := assert.New(t)
+	must := require.New(t)
 
-		{func(Conn) {}, true, []interface{}{}},
-		{func(Conn, int) {}, true, []interface{}{1}},
-		{func(Conn, int) error { return nil }, true, []interface{}{1}},
+	h := NewHandler(t.Name(), nil)
+
+	onConnectCalled := false
+	h.OnConnect(func(c Conn, req map[string]interface{}) error {
+		onConnectCalled = true
+		return nil
+	})
+
+	disconnectMsg := ""
+	h.OnDisconnect(func(c Conn, reason string, details map[string]interface{}) {
+		disconnectMsg = reason
+	})
+
+	var onError error
+	h.OnError(func(conn Conn, err error) {
+		onError = err
+	})
+
+	header := parser.Header{
+		Type: parser.Connect,
 	}
 
-	for _, test := range tests {
-		t.Run(fmt.Sprintf("%#v", test.argTypes), func(t *testing.T) {
-			should := assert.New(t)
-			must := require.New(t)
+	_, err := h.dispatch(&namespaceConn{}, header)
+	must.NoError(err)
 
-			defer func() {
-				r := recover()
-				must.Equal(test.ok, r == nil)
-			}()
+	should.True(onConnectCalled)
 
-			h := newEventFunc(test.f)
-			must.Equal(len(test.argTypes), len(h.argTypes))
-			for i := range h.argTypes {
-				should.Equal(reflect.TypeOf(test.argTypes[i]), h.argTypes[i])
-			}
-		})
-	}
+	header.Type = parser.Disconnect
+
+	_, err = h.dispatch(&namespaceConn{}, header, []reflect.Value{reflect.ValueOf("disconnect")}...)
+	must.NoError(err)
+
+	should.Equal("disconnect", disconnectMsg)
+
+	header.Type = parser.Error
+
+	_, err = h.dispatch(&namespaceConn{}, header, []reflect.Value{reflect.ValueOf("failed")}...)
+	must.Error(err)
+
+	should.Equal(onError.Error(), "failed")
+
+	header.Type = parser.Event
+	args := h.getEventTypes("not_exist")
+
+	should.Nil(args)
+
+	ret, err := h.dispatchEvent(&namespaceConn{}, "not_exist")
+	must.NoError(err)
+
+	should.Nil(ret)
 }
 
-func TestNewAckFunc(t *testing.T) {
+func TestNamespaceHandlerEvent(t *testing.T) {
 	tests := []struct {
-		f        interface{}
-		ok       bool
-		argTypes []interface{}
-	}{
-		{1, false, []interface{}{}},
+		name string
 
-		{func() {}, true, []interface{}{}},
-		{func(int) {}, true, []interface{}{1}},
-		{func(int) error { return nil }, true, []interface{}{1}},
+		events   []string
+		handlers []interface{}
+
+		event string
+		args  []interface{}
+
+		ok  bool
+		ret []interface{}
+	}{
+		{
+			name: "string handler",
+
+			events: []string{"e", "n"},
+			handlers: []interface{}{
+				func(c Conn, str string) string {
+					return "handled " + str
+				},
+				func(c Conn) {},
+			},
+
+			event: "e",
+			args:  []interface{}{"str"},
+
+			ok:  true,
+			ret: []interface{}{"handled str"},
+		},
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%#v", test.argTypes), func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			should := assert.New(t)
 			must := require.New(t)
 
-			defer func() {
-				r := recover()
-				must.Equal(test.ok, r == nil)
-			}()
-
-			h := newAckFunc(test.f)
-			must.Equal(len(test.argTypes), len(h.argTypes))
-
-			for i := range h.argTypes {
-				should.Equal(reflect.TypeOf(test.argTypes[i]), h.argTypes[i])
+			h := NewHandler(test.name, nil)
+			for i, e := range test.events {
+				h.OnEvent(e, test.handlers[i])
 			}
-		})
-	}
-}
 
-func TestHandlerCall(t *testing.T) {
-	tests := []struct {
-		f    interface{}
-		args []interface{}
-		ok   bool
-		rets []interface{}
-	}{
-		{func() {}, []interface{}{1}, false, nil},
-
-		{func() {}, nil, true, nil},
-		{func(int) {}, []interface{}{1}, true, nil},
-		{func() int { return 1 }, nil, true, []interface{}{1}},
-		{func(int) int { return 1 }, []interface{}{1}, true, []interface{}{1}},
-	}
-
-	for _, test := range tests {
-		t.Run(fmt.Sprintf("%#v", test.f), func(t *testing.T) {
-			should := assert.New(t)
-			must := require.New(t)
-
-			h := newAckFunc(test.f)
-
+			target := make([]reflect.Type, len(test.args))
 			args := make([]reflect.Value, len(test.args))
-			for i := range args {
+
+			for i := range test.args {
+				target[i] = reflect.TypeOf(test.args[i])
 				args[i] = reflect.ValueOf(test.args[i])
 			}
 
-			retV, err := h.Call(args)
-			must.Equal(test.ok, err == nil)
+			types := h.getEventTypes(test.event)
+			should.Equal(target, types)
 
-			if len(retV) == len(test.rets) && len(test.rets) == 0 {
-				return
+			ret, err := h.dispatchEvent(&namespaceConn{}, test.event, args...)
+			must.NoError(err)
+
+			res := make([]interface{}, len(ret))
+			for i := range ret {
+				res[i] = ret[i].Interface()
 			}
 
-			rets := make([]interface{}, len(retV))
-			for i := range rets {
-				rets[i] = retV[i].Interface()
-			}
-
-			should.Equal(test.rets, rets)
+			should.Equal(test.ret, res)
 		})
 	}
 }

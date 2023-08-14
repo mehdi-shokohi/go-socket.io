@@ -3,7 +3,7 @@ package polling
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -13,21 +13,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
-	"github.com/thisismz/go-socket.io/engineio/packet"
-	"github.com/thisismz/go-socket.io/engineio/transport"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/packet"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport"
 )
 
 func TestDialOpen(t *testing.T) {
-	should := assert.New(t)
-	must := require.New(t)
-
 	cp := transport.ConnParameters{
 		PingInterval: time.Second,
 		PingTimeout:  time.Minute,
 		SID:          "abcdefg",
 		Upgrades:     []string{"polling"},
 	}
+	should := assert.New(t)
+	must := require.New(t)
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -38,26 +37,23 @@ func TestDialOpen(t *testing.T) {
 		if sid == "" {
 			buf := bytes.NewBuffer(nil)
 			_, err := cp.WriteTo(buf)
-			must.NoError(err)
+			must.Nil(err)
 
-			_, err = fmt.Fprintf(w, "%d", buf.Len()+1)
-			must.NoError(err)
+			fmt.Fprintf(w, "%d", buf.Len()+1)
 
 			_, err = w.Write([]byte(":0"))
-			must.NoError(err)
+			must.Nil(err)
 
 			_, err = w.Write(buf.Bytes())
-			must.NoError(err)
+			must.Nil(err)
 
 			return
 		}
 
-		if r.Method == http.MethodPost {
+		if r.Method == "POST" {
 			must.Equal(cp.SID, sid)
-
-			b, err := ioutil.ReadAll(r.Body)
-			must.NoError(err)
-
+			b, err := io.ReadAll(r.Body)
+			must.Nil(err)
 			should.Equal("6:4hello", string(b))
 		}
 	}
@@ -66,21 +62,17 @@ func TestDialOpen(t *testing.T) {
 	defer httpSvr.Close()
 
 	u, err := url.Parse(httpSvr.URL)
-	must.NoError(err)
-
+	must.Nil(err)
 	query := u.Query()
 	query.Set("b64", "1")
 	u.RawQuery = query.Encode()
 
 	cc, err := dial(nil, u, nil)
-	must.NoError(err)
-
-	defer func() {
-		must.NoError(cc.Close())
-	}()
+	must.Nil(err)
+	defer cc.Close()
 
 	params, err := cc.Open()
-	must.NoError(err)
+	must.Nil(err)
 
 	should.Equal(cp, params)
 
@@ -90,9 +82,9 @@ func TestDialOpen(t *testing.T) {
 	should.Equal(cp.SID, sid)
 
 	w, err := cc.NextWriter(frame.String, packet.MESSAGE)
-	must.NoError(err)
+	should.Nil(err)
 
 	_, err = w.Write([]byte("hello"))
-	must.NoError(err)
+	should.Nil(err)
 	should.Nil(w.Close())
 }

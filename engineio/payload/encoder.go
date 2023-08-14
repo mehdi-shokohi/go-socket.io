@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"io"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
-	"github.com/thisismz/go-socket.io/engineio/packet"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/packet"
 )
 
 type writerFeeder interface {
@@ -27,10 +27,7 @@ type encoder struct {
 }
 
 func (e *encoder) NOOP() []byte {
-	if e.supportBinary {
-		return []byte{0x00, 0x01, 0xff, '6'}
-	}
-	return []byte("1:6")
+	return []byte{'6'}
 }
 
 func (e *encoder) NextWriter(ft frame.Type, pt packet.Type) (io.WriteCloser, error) {
@@ -44,7 +41,7 @@ func (e *encoder) NextWriter(ft frame.Type, pt packet.Type) (io.WriteCloser, err
 	e.pt = pt
 	e.frameCache.Reset()
 
-	if !e.supportBinary && ft == frame.Binary {
+	if ft == frame.Binary {
 		e.b64Writer = base64.NewEncoder(base64.StdEncoding, &e.frameCache)
 	} else {
 		e.b64Writer = nil
@@ -61,20 +58,14 @@ func (e *encoder) Write(p []byte) (int, error) {
 
 func (e *encoder) Close() error {
 	if e.b64Writer != nil {
-		if err := e.b64Writer.Close(); err != nil {
-			return err
-		}
+		_ = e.b64Writer.Close()
 	}
 
 	var writeHeader func() error
-	if e.supportBinary {
-		writeHeader = e.writeBinaryHeader
+	if e.ft == frame.Binary {
+		writeHeader = e.writeB64Header
 	} else {
-		if e.ft == frame.Binary {
-			writeHeader = e.writeB64Header
-		} else {
-			writeHeader = e.writeTextHeader
-		}
+		writeHeader = e.writeTextHeader
 	}
 
 	e.header.Reset()
@@ -92,38 +83,13 @@ func (e *encoder) Close() error {
 }
 
 func (e *encoder) writeTextHeader() error {
-	l := int64(e.frameCache.Len() + 1) // length for packet type
-	err := writeTextLen(l, &e.header)
-	if err == nil {
-		err = e.header.WriteByte(e.pt.StringByte())
-	}
-	return err
+	return e.header.WriteByte(e.pt.StringByte())
 }
 
 func (e *encoder) writeB64Header() error {
-	l := int64(e.frameCache.Len() + 2) // length for 'b' and packet type
-	err := writeTextLen(l, &e.header)
+	err := e.header.WriteByte(e.pt.StringByte())
 	if err == nil {
 		err = e.header.WriteByte('b')
-	}
-	if err == nil {
-		err = e.header.WriteByte(e.pt.StringByte())
-	}
-	return err
-}
-
-func (e *encoder) writeBinaryHeader() error {
-	l := int64(e.frameCache.Len() + 1) // length for packet type
-	b := e.pt.StringByte()
-	if e.ft == frame.Binary {
-		b = e.pt.BinaryByte()
-	}
-	err := e.header.WriteByte(e.ft.Byte())
-	if err == nil {
-		err = writeBinaryLen(l, &e.header)
-	}
-	if err == nil {
-		err = e.header.WriteByte(b)
 	}
 	return err
 }

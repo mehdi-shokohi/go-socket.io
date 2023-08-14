@@ -1,7 +1,7 @@
 package session
 
 import (
-	"github.com/thisismz/go-socket.io/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
 )
 
 // FrameType is type of message frame.
@@ -11,5 +11,5 @@ const (
 	// TEXT is text type message.
 	TEXT = FrameType(frame.String)
 	// BINARY is binary type message.
-	BINARY = FrameType(frame.Binary)
+	BINARY = FrameType(frame.String)
 )

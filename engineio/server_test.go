@@ -2,7 +2,7 @@ package engineio
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -13,12 +13,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
-	"github.com/thisismz/go-socket.io/engineio/packet"
-	"github.com/thisismz/go-socket.io/engineio/session"
-	"github.com/thisismz/go-socket.io/engineio/transport"
-	"github.com/thisismz/go-socket.io/engineio/transport/polling"
-	"github.com/thisismz/go-socket.io/engineio/transport/websocket"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/packet"
+	"github.com/thisismz/go-socket.io/v4/engineio/session"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport/polling"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport/websocket"
 )
 
 func TestEnginePolling(t *testing.T) {
@@ -26,9 +26,7 @@ func TestEnginePolling(t *testing.T) {
 	must := require.New(t)
 
 	svr := NewServer(nil)
-	defer func() {
-		must.NoError(svr.Close())
-	}()
+	defer svr.Close()
 
 	httpSvr := httptest.NewServer(svr)
 	defer httpSvr.Close()
@@ -39,27 +37,28 @@ func TestEnginePolling(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
+		should := assert.New(t)
+		must := require.New(t)
+
 		conn, err := svr.Accept()
-		must.NoError(err)
-		defer func() {
-			must.NoError(conn.Close())
-		}()
+		must.Nil(err)
+		defer conn.Close()
 
 		ft, r, err := conn.NextReader()
-		must.NoError(err)
+		must.Nil(err)
 		should.Equal(session.TEXT, ft)
 
-		b, err := ioutil.ReadAll(r)
-		must.NoError(err)
+		b, err := io.ReadAll(r)
+		must.Nil(err)
 		should.Equal("hello你好", string(b))
 
 		must.Nil(r.Close())
 
 		w, err := conn.NextWriter(session.BINARY)
-		must.NoError(err)
+		must.Nil(err)
 
 		_, err = w.Write([]byte{1, 2, 3, 4})
-		must.NoError(err)
+		must.Nil(err)
 		must.Nil(w.Close())
 	}()
 
@@ -70,21 +69,21 @@ func TestEnginePolling(t *testing.T) {
 	header.Set("X-EIO-Test", "client")
 
 	cnt, err := dialer.Dial(httpSvr.URL, header)
-	must.NoError(err)
+	must.Nil(err)
 
 	w, err := cnt.NextWriter(session.TEXT)
-	must.NoError(err)
+	must.Nil(err)
 
 	_, err = w.Write([]byte("hello你好"))
-	must.NoError(err)
+	must.Nil(err)
 	must.Nil(w.Close())
 
 	ft, r, err := cnt.NextReader()
-	must.NoError(err)
+	must.Nil(err)
 	should.Equal(session.BINARY, ft)
 
-	b, err := ioutil.ReadAll(r)
-	must.NoError(err)
+	b, err := io.ReadAll(r)
+	must.Nil(err)
 	should.Equal([]byte{1, 2, 3, 4}, b)
 
 	must.Nil(r.Close())
@@ -98,9 +97,7 @@ func TestEngineWebsocket(t *testing.T) {
 	must := require.New(t)
 
 	svr := NewServer(nil)
-	defer func() {
-		must.NoError(svr.Close())
-	}()
+	defer svr.Close()
 
 	httpSvr := httptest.NewServer(svr)
 	defer httpSvr.Close()
@@ -114,12 +111,12 @@ func TestEngineWebsocket(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
-		conn, err := svr.Accept()
-		must.NoError(err)
+		should := assert.New(t)
+		must := require.New(t)
 
-		defer func() {
-			must.NoError(conn.Close())
-		}()
+		conn, err := svr.Accept()
+		must.Nil(err)
+		defer conn.Close()
 
 		should.Equal("client", conn.RemoteHeader().Get("X-EIO-Test"))
 		u := conn.URL()
@@ -128,22 +125,22 @@ func TestEngineWebsocket(t *testing.T) {
 		should.Equal("/", u.String())
 
 		ft, r, err := conn.NextReader()
-		must.NoError(err)
+		must.Nil(err)
 
 		should.Equal(session.TEXT, ft)
 
-		b, err := ioutil.ReadAll(r)
-		must.NoError(err)
+		b, err := io.ReadAll(r)
+		must.Nil(err)
 
 		should.Equal("hello你好", string(b))
 		err = r.Close()
-		must.NoError(err)
+		must.Nil(err)
 
 		w, err := conn.NextWriter(session.BINARY)
-		must.NoError(err)
+		must.Nil(err)
 
 		_, err = w.Write([]byte{1, 2, 3, 4})
-		must.NoError(err)
+		must.Nil(err)
 		must.Nil(w.Close())
 	}()
 
@@ -154,7 +151,7 @@ func TestEngineWebsocket(t *testing.T) {
 	header.Set("X-EIO-Test", "client")
 
 	cnt, err := dialer.Dial(httpSvr.URL, header)
-	must.NoError(err)
+	must.Nil(err)
 
 	u := strings.Replace(httpSvr.URL, "http", "ws", 1)
 	ur := cnt.URL()
@@ -163,26 +160,26 @@ func TestEngineWebsocket(t *testing.T) {
 	should.Equal(u, ur.String())
 
 	w, err := cnt.NextWriter(session.TEXT)
-	must.NoError(err)
+	must.Nil(err)
 
 	_, err = w.Write([]byte("hello你好"))
-	must.NoError(err)
+	must.Nil(err)
 
 	err = w.Close()
-	must.NoError(err)
+	must.Nil(err)
 
 	ft, r, err := cnt.NextReader()
-	must.NoError(err)
+	must.Nil(err)
 	should.Equal(session.BINARY, ft)
 
-	b, err := ioutil.ReadAll(r)
-	must.NoError(err)
+	b, err := io.ReadAll(r)
+	must.Nil(err)
 	should.Equal([]byte{1, 2, 3, 4}, b)
 
 	err = r.Close()
-	must.NoError(err)
+	must.Nil(err)
 
-	must.NoError(cnt.Close())
+	must.Nil(cnt.Close())
 
 	wg.Wait()
 
@@ -194,9 +191,7 @@ func TestEngineUpgrade(t *testing.T) {
 	must := require.New(t)
 
 	svr := NewServer(nil)
-	defer func() {
-		must.NoError(svr.Close())
-	}()
+	defer svr.Close()
 
 	httpSvr := httptest.NewServer(svr)
 	defer httpSvr.Close()
@@ -208,50 +203,53 @@ func TestEngineUpgrade(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
+		should := assert.New(t)
+		must := require.New(t)
+
 		conn, err := svr.Accept()
-		must.NoError(err)
-		defer func() {
-			must.NoError(conn.Close())
-		}()
+		must.Nil(err)
+		defer conn.Close()
 
 		ft, r, err := conn.NextReader()
-		must.NoError(err)
+		must.Nil(err)
 		should.Equal(session.TEXT, ft)
 
-		b, err := ioutil.ReadAll(r)
-		must.NoError(err)
+		b, err := io.ReadAll(r)
+		must.Nil(err)
 		should.Equal("hello你好", string(b))
 
-		must.NoError(r.Close())
+		must.Nil(r.Close())
 
 		w, err := conn.NextWriter(session.BINARY)
-		must.NoError(err)
+		must.Nil(err)
 
 		_, err = w.Write([]byte{1, 2, 3, 4})
-		must.NoError(err)
-		must.NoError(w.Close())
+		must.Nil(err)
+		must.Nil(w.Close())
 	}()
 
 	u, err := url.Parse(httpSvr.URL)
-	must.NoError(err)
+	must.Nil(err)
 
 	query := u.Query()
 	query.Set("EIO", "3")
 	u.RawQuery = query.Encode()
 
 	p, err := polling.Default.Dial(u, nil)
-	must.NoError(err)
+	must.Nil(err)
 
 	params, err := p.(Opener).Open()
-	must.NoError(err)
+	must.Nil(err)
 
 	pRead := make(chan int, 1)
 
 	go func() {
+		should := assert.New(t)
+		must := require.New(t)
 		pRead <- 1
 
 		ft, pt, r, err := p.NextReader()
-		must.NoError(err)
+		must.Nil(err)
 
 		should.Equal(frame.String, ft)
 		should.Equal(packet.NOOP, pt)
@@ -269,59 +267,59 @@ func TestEngineUpgrade(t *testing.T) {
 	upU.RawQuery = query.Encode()
 
 	ws, err := websocket.Default.Dial(&upU, nil)
-	must.NoError(err)
+	must.Nil(err)
 
 	w, err := ws.NextWriter(frame.String, packet.PING)
-	must.NoError(err)
+	must.Nil(err)
 
 	_, err = w.Write([]byte("probe"))
-	must.NoError(err)
+	must.Nil(err)
 
-	must.NoError(w.Close())
+	must.Nil(w.Close())
 
 	ft, pt, r, err := ws.NextReader()
-	must.NoError(err)
+	must.Nil(err)
 
 	should.Equal(frame.String, ft)
 	should.Equal(packet.PONG, pt)
 
-	b, err := ioutil.ReadAll(r)
-	must.NoError(err)
+	b, err := io.ReadAll(r)
+	must.Nil(err)
 
 	should.Equal("probe", string(b))
 
-	must.NoError(r.Close())
+	must.Nil(r.Close())
 
 	w, err = ws.NextWriter(frame.String, packet.UPGRADE)
-	must.NoError(err)
+	must.Nil(err)
 
-	must.NoError(w.Close())
+	must.Nil(w.Close())
 
 	<-pRead
 
 	must.Nil(p.Close())
 
 	w, err = ws.NextWriter(frame.String, packet.MESSAGE)
-	must.NoError(err)
+	must.Nil(err)
 
 	_, err = w.Write([]byte("hello你好"))
-	must.NoError(err)
+	must.Nil(err)
 
 	must.Nil(w.Close())
 
 	ft, pt, r, err = ws.NextReader()
-	must.NoError(err)
+	must.Nil(err)
 
 	should.Equal(frame.Binary, ft)
 	should.Equal(packet.MESSAGE, pt)
 
-	b, err = ioutil.ReadAll(r)
-	must.NoError(err)
+	b, err = io.ReadAll(r)
+	must.Nil(err)
 
-	must.NoError(r.Close())
+	must.Nil(r.Close())
 	should.Equal([]byte{1, 2, 3, 4}, b)
 
 	wg.Wait()
 
-	must.NoError(ws.Close())
+	must.Nil(ws.Close())
 }

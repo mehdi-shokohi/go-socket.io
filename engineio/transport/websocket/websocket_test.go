@@ -1,7 +1,7 @@
 package websocket
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
-	"github.com/thisismz/go-socket.io/engineio/packet"
-	"github.com/thisismz/go-socket.io/engineio/transport"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/packet"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport"
 )
 
 var tests = []struct {
@@ -27,8 +27,6 @@ var tests = []struct {
 }
 
 func TestWebsocket(t *testing.T) {
-	must := require.New(t)
-
 	wsTransport := &Transport{}
 	assert.Equal(t, "websocket", wsTransport.Name())
 
@@ -55,14 +53,10 @@ func TestWebsocket(t *testing.T) {
 	cc, err := wsTransport.Dial(&dialU, header)
 	require.NoError(t, err)
 
-	defer func() {
-		must.NoError(cc.Close())
-	}()
+	defer cc.Close()
 
 	sc := <-conn
-	defer func() {
-		must.NoError(sc.Close())
-	}()
+	defer sc.Close()
 
 	ccURL := cc.URL()
 	query := ccURL.Query()
@@ -99,7 +93,7 @@ func TestWebsocket(t *testing.T) {
 			assert.Equal(t, test.ft, ft)
 			assert.Equal(t, test.pt, pt)
 
-			b, err := ioutil.ReadAll(r)
+			b, err := io.ReadAll(r)
 			require.NoError(t, err)
 
 			err = r.Close()
@@ -134,7 +128,7 @@ func TestWebsocket(t *testing.T) {
 		assert.Equal(t, test.ft, ft)
 		assert.Equal(t, test.pt, pt)
 
-		b, err := ioutil.ReadAll(r)
+		b, err := io.ReadAll(r)
 		require.NoError(t, err)
 
 		err = r.Close()

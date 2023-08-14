@@ -3,14 +3,14 @@ package packet
 import (
 	"io"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
 )
 
 type fakeConnWriter struct {
 	Frames []Frame
 }
 
-func NewFakeConnWriter() *fakeConnWriter {
+func newFakeConnWriter() *fakeConnWriter {
 	return &fakeConnWriter{}
 }
 

@@ -2,7 +2,7 @@ package transport
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"testing"
 	"time"
 
@@ -22,6 +22,7 @@ func TestConnParameters(t *testing.T) {
 			ConnParameters{
 				time.Second * 10,
 				time.Second * 5,
+				1e6,
 				"vCcJKmYQcIf801WDAAAB",
 				[]string{"websocket", "polling"},
 			},
@@ -48,6 +49,7 @@ func BenchmarkConnParameters(b *testing.B) {
 	param := ConnParameters{
 		time.Second * 10,
 		time.Second * 5,
+		1e6,
 		"vCcJKmYQcIf801WDAAAB",
 		[]string{"websocket", "polling"},
 	}
@@ -55,7 +57,7 @@ func BenchmarkConnParameters(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := param.WriteTo(ioutil.Discard)
+		_, err := param.WriteTo(io.Discard)
 		must.Nil(err)
 	}
 }

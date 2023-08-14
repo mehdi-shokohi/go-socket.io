@@ -1,7 +1,7 @@
 package polling
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,11 +10,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
-	"github.com/thisismz/go-socket.io/engineio/packet"
-	"github.com/thisismz/go-socket.io/engineio/transport"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/packet"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport"
 )
 
 var tests = []struct {
@@ -29,8 +28,6 @@ var tests = []struct {
 
 func TestPollingBinary(t *testing.T) {
 	should := assert.New(t)
-	must := require.New(t)
-
 	var scValue atomic.Value
 
 	pollingTransport := Default
@@ -64,9 +61,7 @@ func TestPollingBinary(t *testing.T) {
 	should.Nil(err)
 
 	cc.(*clientConn).Resume()
-	defer func() {
-		must.NoError(cc.Close())
-	}()
+	defer cc.Close()
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -79,7 +74,7 @@ func TestPollingBinary(t *testing.T) {
 
 			should.Equal(test.ft, ft)
 			should.Equal(test.pt, pt)
-			b, err := ioutil.ReadAll(r)
+			b, err := io.ReadAll(r)
 			should.Nil(err)
 			should.Equal(test.data, b)
 			err = r.Close()
@@ -95,9 +90,7 @@ func TestPollingBinary(t *testing.T) {
 	}()
 
 	sc := <-conn
-	defer func() {
-		must.NoError(sc.Close())
-	}()
+	defer sc.Close()
 
 	for _, test := range tests {
 		w, err := sc.NextWriter(test.ft, test.pt)
@@ -111,7 +104,7 @@ func TestPollingBinary(t *testing.T) {
 		should.Nil(err)
 		should.Equal(test.ft, ft)
 		should.Equal(test.pt, pt)
-		b, err := ioutil.ReadAll(r)
+		b, err := io.ReadAll(r)
 		should.Nil(err)
 		err = r.Close()
 		should.Nil(err)
@@ -129,8 +122,6 @@ func TestPollingBinary(t *testing.T) {
 
 func TestPollingString(t *testing.T) {
 	should := assert.New(t)
-	must := require.New(t)
-
 	var scValue atomic.Value
 
 	pollingTransport := Default
@@ -164,14 +155,10 @@ func TestPollingString(t *testing.T) {
 	should.Nil(err)
 
 	cc.(*clientConn).Resume()
-	defer func() {
-		must.NoError(cc.Close())
-	}()
+	defer cc.Close()
 
 	sc := <-conn
-	defer func() {
-		must.NoError(sc.Close())
-	}()
+	defer sc.Close()
 
 	should.Equal(sc.LocalAddr(), cc.RemoteAddr())
 	should.Equal("tcp", sc.LocalAddr().Network())
@@ -189,7 +176,7 @@ func TestPollingString(t *testing.T) {
 
 			should.Equal(test.ft, ft)
 			should.Equal(test.pt, pt)
-			b, err := ioutil.ReadAll(r)
+			b, err := io.ReadAll(r)
 			should.Nil(err)
 			err = r.Close()
 			should.Nil(err)
@@ -217,7 +204,7 @@ func TestPollingString(t *testing.T) {
 		should.Equal(test.ft, ft)
 		should.Equal(test.pt, pt)
 
-		b, err := ioutil.ReadAll(r)
+		b, err := io.ReadAll(r)
 		should.Nil(err)
 		should.Nil(r.Close())
 		should.Equal(test.data, b)

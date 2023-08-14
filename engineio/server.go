@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/thisismz/go-socket.io/v4/logger"
 
-	"github.com/thisismz/go-socket.io/engineio/session"
-	"github.com/thisismz/go-socket.io/engineio/transport"
+	"github.com/thisismz/go-socket.io/v4/engineio/session"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport"
 )
 
 // Server is instance of server
@@ -25,7 +25,7 @@ type Server struct {
 	sessions   *session.Manager
 
 	requestChecker CheckerFunc
-	connInitor     ConnInitorFunc
+	connInitiator  ConnInitiatorFunc
 
 	connChan  chan Conn
 	closeOnce sync.Once
@@ -38,7 +38,7 @@ func NewServer(opts *Options) *Server {
 		pingInterval:   opts.getPingInterval(),
 		pingTimeout:    opts.getPingTimeout(),
 		requestChecker: opts.getRequestChecker(),
-		connInitor:     opts.getConnInitor(),
+		connInitiator:  opts.getConnInitiator(),
 		sessions:       session.NewManager(opts.getSessionIDGenerator()),
 		connChan:       make(chan Conn, 1),
 	}
@@ -70,8 +70,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	reqTransport := query.Get("transport")
 	srvTransport, ok := s.transports.Get(reqTransport)
-	if !ok {
-		http.Error(w, fmt.Sprintf("invalid transport: %s", reqTransport), http.StatusBadRequest)
+	if !ok || srvTransport == nil {
+		http.Error(w, fmt.Sprintf("invalid transport: %s", srvTransport), http.StatusBadRequest)
 		return
 	}
 
@@ -88,7 +88,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sid := query.Get("sid")
 	reqSession, ok := s.sessions.Get(sid)
 	// if we can't find session in current session pool, let's create this. behaviour for new connections
-	if !ok {
+	if !ok || reqSession == nil {
 		if sid != "" {
 			http.Error(w, fmt.Sprintf("invalid sid value: %s", sid), http.StatusBadRequest)
 			return
@@ -106,7 +106,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		s.connInitor(r, reqSession)
+		s.connInitiator(r, reqSession)
 	}
 
 	// try upgrade current connection
@@ -146,6 +146,7 @@ func (s *Server) newSession(_ context.Context, conn transport.Conn, reqTransport
 	params := transport.ConnParameters{
 		PingInterval: s.pingInterval,
 		PingTimeout:  s.pingTimeout,
+		MaxPayload:   1e6,
 		Upgrades:     s.transports.UpgradeFrom(reqTransport),
 	}
 
@@ -156,8 +157,9 @@ func (s *Server) newSession(_ context.Context, conn transport.Conn, reqTransport
 	}
 
 	go func(newSession *session.Session) {
+		var ll = logger.GetLogger("engineio.server")
 		if err = newSession.InitSession(); err != nil {
-			log.Println("init new session:", err)
+			ll.Error(err, "init new session:")
 
 			return
 		}

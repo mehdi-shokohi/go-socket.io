@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
 )
 
 func TestEncoder(t *testing.T) {
 	at := assert.New(t)
 
 	for _, test := range tests {
-		w := NewFakeConnWriter()
+		w := newFakeConnWriter()
 		encoder := NewEncoder(w)
 		for _, p := range test.packets {
 			fw, err := encoder.NextWriter(p.FType, p.PType)
@@ -32,24 +32,10 @@ func BenchmarkEncoder(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		w, err := encoder.NextWriter(frame.String, MESSAGE)
-		if err != nil {
-			b.Error(err)
-		}
+		w, _ := encoder.NextWriter(frame.String, MESSAGE)
+		w.Close()
 
-		err = w.Close()
-		if err != nil {
-			b.Error(err)
-		}
-
-		w, err = encoder.NextWriter(frame.Binary, MESSAGE)
-		if err != nil {
-			b.Error(err)
-		}
-
-		err = w.Close()
-		if err != nil {
-			b.Error(err)
-		}
+		w, _ = encoder.NextWriter(frame.Binary, MESSAGE)
+		w.Close()
 	}
 }

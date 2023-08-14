@@ -2,13 +2,11 @@ package packet
 
 import (
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
 )
 
 var tests = []struct {
@@ -59,25 +57,21 @@ var tests = []struct {
 }
 
 func TestDecoder(t *testing.T) {
-	should := assert.New(t)
-	must := require.New(t)
+	at := assert.New(t)
 
 	for _, test := range tests {
-		r := NewFakeConnReader(test.frames)
+		r := newFakeConnReader(test.frames)
 		decoder := NewDecoder(r)
 		var output []Packet
 		for {
 			ft, pt, fr, err := decoder.NextReader()
 			if err != nil {
-				should.Equal(io.EOF, err)
+				at.Equal(io.EOF, err)
 				break
 			}
-
-			b, err := ioutil.ReadAll(fr)
-			must.NoError(err)
-
-			err = fr.Close()
-			must.NoError(err)
+			b, err := io.ReadAll(fr)
+			at.Nil(err)
+			fr.Close()
 
 			output = append(output, Packet{
 				FType: ft,
@@ -85,7 +79,7 @@ func TestDecoder(t *testing.T) {
 				Data:  b,
 			})
 		}
-		should.Equal(test.packets, output)
+		at.Equal(test.packets, output)
 	}
 }
 
@@ -95,24 +89,9 @@ func BenchmarkDecoder(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _, fr, err := decoder.NextReader()
-		if err != nil {
-			b.Error(err)
-		}
-
-		err = fr.Close()
-		if err != nil {
-			b.Error(err)
-		}
-
-		_, _, fr, err = decoder.NextReader()
-		if err != nil {
-			b.Error(err)
-		}
-
-		err = fr.Close()
-		if err != nil {
-			b.Error(err)
-		}
+		_, _, fr, _ := decoder.NextReader()
+		fr.Close()
+		_, _, fr, _ = decoder.NextReader()
+		fr.Close()
 	}
 }

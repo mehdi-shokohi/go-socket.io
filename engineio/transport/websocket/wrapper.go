@@ -2,15 +2,14 @@ package websocket
 
 import (
 	"io"
-	"io/ioutil"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/thisismz/go-socket.io/logger"
+	"github.com/thisismz/go-socket.io/v4/logger"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
-	"github.com/thisismz/go-socket.io/engineio/transport"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport"
 )
 
 type wrapper struct {
@@ -60,10 +59,11 @@ func newRcWrapper(l *sync.Mutex, r io.Reader) rcWrapper {
 	q := make(chan struct{})
 
 	go func() {
+		ll := logger.GetLogger("engineio.transport.websocket")
 		select {
 		case <-q:
 		case <-timer.C:
-			logger.Error("Did you forget to Close() the ReadCloser from NextReader?")
+			ll.Info("Did you forget to Close() the ReadCloser from NextReader?")
 		}
 	}()
 
@@ -84,7 +84,7 @@ func (r rcWrapper) Close() error {
 	close(r.quitNag)
 
 	// Attempt to drain the Reader.
-	_, err := io.Copy(ioutil.Discard, r)
+	_, err := io.Copy(io.Discard, r)
 
 	return err
 }
@@ -125,10 +125,11 @@ func newWcWrapper(l *sync.Mutex, w io.WriteCloser) wcWrapper {
 	chQuit := make(chan struct{})
 
 	go func() {
+		ll := logger.GetLogger("engineio.transport.websocket")
 		select {
 		case <-chQuit:
 		case <-timer.C:
-			logger.Error("Did you forget to Close() the WriteCloser from NextWriter?")
+			ll.Info("Did you forget to Close() the WriteCloser from NextWriter?")
 		}
 	}()
 

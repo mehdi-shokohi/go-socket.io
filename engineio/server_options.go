@@ -1,13 +1,14 @@
 package engineio
 
 import (
-	"github.com/thisismz/go-socket.io/engineio/session"
 	"net/http"
 	"time"
 
-	"github.com/thisismz/go-socket.io/engineio/transport"
-	"github.com/thisismz/go-socket.io/engineio/transport/polling"
-	"github.com/thisismz/go-socket.io/engineio/transport/websocket"
+	"github.com/thisismz/go-socket.io/v4/engineio/session"
+
+	"github.com/thisismz/go-socket.io/v4/engineio/transport"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport/polling"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport/websocket"
 )
 
 // Options is options to create a server.
@@ -19,7 +20,7 @@ type Options struct {
 	SessionIDGenerator session.IDGenerator
 
 	RequestChecker CheckerFunc
-	ConnInitor     ConnInitorFunc
+	ConnInitiator  ConnInitiatorFunc
 }
 
 func (c *Options) getRequestChecker() CheckerFunc {
@@ -29,11 +30,11 @@ func (c *Options) getRequestChecker() CheckerFunc {
 	return defaultChecker
 }
 
-func (c *Options) getConnInitor() ConnInitorFunc {
-	if c != nil && c.ConnInitor != nil {
-		return c.ConnInitor
+func (c *Options) getConnInitiator() ConnInitiatorFunc {
+	if c != nil && c.ConnInitiator != nil {
+		return c.ConnInitiator
 	}
-	return defaultInitor
+	return defaultInitiator
 }
 
 func (c *Options) getPingTimeout() time.Duration {
@@ -71,4 +72,4 @@ func defaultChecker(*http.Request) (http.Header, error) {
 	return nil, nil
 }
 
-func defaultInitor(*http.Request, Conn) {}
+func defaultInitiator(*http.Request, Conn) {}

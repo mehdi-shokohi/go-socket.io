@@ -3,7 +3,7 @@ package polling
 import (
 	"fmt"
 	"html/template"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -13,14 +13,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
-	"github.com/thisismz/go-socket.io/engineio/packet"
-	"github.com/thisismz/go-socket.io/engineio/transport"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/packet"
+	"github.com/thisismz/go-socket.io/v4/engineio/transport"
 )
 
 func TestServerJSONP(t *testing.T) {
-	must := require.New(t)
-
 	var scValue atomic.Value
 
 	pollingTransport := Default
@@ -49,9 +47,7 @@ func TestServerJSONP(t *testing.T) {
 		defer wg.Done()
 		sc := <-conn
 
-		defer func() {
-			must.NoError(sc.Close())
-		}()
+		defer sc.Close()
 
 		w, err := sc.NextWriter(frame.Binary, packet.MESSAGE)
 		require.NoError(t, err)
@@ -77,13 +73,10 @@ func TestServerJSONP(t *testing.T) {
 		resp, err := http.Get(u)
 		require.NoError(t, err)
 
-		defer func() {
-			err = resp.Body.Close()
-			require.NoError(t, err)
-		}()
+		defer resp.Body.Close()
 
 		assert.Equal(t, "text/javascript; charset=UTF-8", resp.Header.Get("Content-Type"))
-		bs, err := ioutil.ReadAll(resp.Body)
+		bs, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, fmt.Sprintf("___eio[jsonp_f1](\"%s\");", template.JSEscapeString("10:b4aGVsbG8=")), string(bs))
@@ -93,14 +86,11 @@ func TestServerJSONP(t *testing.T) {
 		resp, err := http.Get(u)
 		require.NoError(t, err)
 
-		defer func() {
-			err = resp.Body.Close()
-			require.NoError(t, err)
-		}()
+		defer resp.Body.Close()
 
 		assert.Equal(t, "text/javascript; charset=UTF-8", resp.Header.Get("Content-Type"))
 
-		bs, err := ioutil.ReadAll(resp.Body)
+		bs, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Equal(t, "___eio[jsonp_f2](\"6:4world\");", string(bs))
 	}

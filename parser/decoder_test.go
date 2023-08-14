@@ -2,10 +2,11 @@ package parser
 
 import (
 	"bytes"
-	"github.com/thisismz/go-socket.io/engineio/session"
 	"io"
 	"reflect"
 	"testing"
+
+	"github.com/thisismz/go-socket.io/v4/engineio/session"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -3,7 +3,7 @@ package packet
 import (
 	"io"
 
-	"github.com/thisismz/go-socket.io/engineio/frame"
+	"github.com/thisismz/go-socket.io/v4/engineio/frame"
 )
 
 // FrameReader is the reader which supports framing.
