@@ -7,11 +7,11 @@ import (
 	"path"
 	"strings"
 
-	"github.com/googollee/go-socket.io/engineio"
-	"github.com/googollee/go-socket.io/engineio/transport"
-	"github.com/googollee/go-socket.io/engineio/transport/polling"
-	"github.com/googollee/go-socket.io/logger"
-	"github.com/googollee/go-socket.io/parser"
+	"github.com/thisismz/go-socket.io/engineio"
+	"github.com/thisismz/go-socket.io/engineio/transport"
+	"github.com/thisismz/go-socket.io/engineio/transport/polling"
+	"github.com/thisismz/go-socket.io/logger"
+	"github.com/thisismz/go-socket.io/parser"
 )
 
 // Server is a go-socket.io server.

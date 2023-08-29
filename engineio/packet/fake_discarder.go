@@ -3,7 +3,7 @@ package packet
 import (
 	"io"
 
-	"github.com/googollee/go-socket.io/engineio/frame"
+	"github.com/thisismz/go-socket.io/engineio/frame"
 )
 
 type fakeOneFrameDiscarder struct{}

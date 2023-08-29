@@ -4,15 +4,15 @@ go-socket.io is library an implementation of [Socket.IO](http://socket.io) in Go
 
 Current this library supports 1.4 version of the Socket.IO client. It supports room, namespaces and broadcast at now.
 
-**Help wanted** This project is looking for contributors to help fix bugs and implement new features. Please check [Issue 192](https://github.com/googollee/go-socket.io/issues/192). All help is much appreciated.
+**Help wanted** This project is looking for contributors to help fix bugs and implement new features. Please check [Issue 192](https://github.com/thisismz/go-socket.io/issues/192). All help is much appreciated.
 
 ## Badges
 
-![Build Status](https://github.com/googollee/go-socket.io/workflows/CI/badge.svg)
-[![GoDoc](http://godoc.org/github.com/googollee/go-socket.io?status.svg)](http://godoc.org/github.com/googollee/go-socket.io)
+![Build Status](https://github.com/thisismz/go-socket.io/workflows/CI/badge.svg)
+[![GoDoc](http://godoc.org/github.com/thisismz/go-socket.io?status.svg)](http://godoc.org/github.com/thisismz/go-socket.io)
 [![License](https://img.shields.io/github/license/golangci/golangci-lint)](/LICENSE)
-[![Release](https://img.shields.io/github/release/googollee/go-socket.io.svg)](https://github.com/googollee/go-socket.io/releases/latest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/googollee/go-socket.io)](https://goreportcard.com/report/github.com/googollee/go-socket.io)
+[![Release](https://img.shields.io/github/release/googollee/go-socket.io.svg)](https://github.com/thisismz/go-socket.io/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/thisismz/go-socket.io)](https://goreportcard.com/report/github.com/thisismz/go-socket.io)
 
 ## Contents
 
@@ -28,20 +28,20 @@ Current this library supports 1.4 version of the Socket.IO client. It supports r
 Install the package with:
 
 ```bash
-go get github.com/googollee/go-socket.io
+go get github.com/thisismz/go-socket.io
 ```
 
 Import it with:
 
 ```go
-import "github.com/googollee/go-socket.io"
+import "github.com/thisismz/go-socket.io"
 ```
 
 and use `socketio` as the package name inside the code.
 
 ## Example
 
-Please check more examples into folder in project for details. [Examples](https://github.com/googollee/go-socket.io/tree/master/_examples)
+Please check more examples into folder in project for details. [Examples](https://github.com/thisismz/go-socket.io/tree/master/_examples)
 
 ## FAQ
 
@@ -50,7 +50,7 @@ It is some popular questions about this repository:
 - Is this library supported socket.io version 2?
     - No, but if you wanna you can help to do it. Join us in community chat Telegram   
 - How to use go-socket.io with CORS?
-    - Please see examples in [directory](https://github.com/googollee/go-socket.io/tree/master/_examples)
+    - Please see examples in [directory](https://github.com/thisismz/go-socket.io/tree/master/_examples)
 
 ## Community
 

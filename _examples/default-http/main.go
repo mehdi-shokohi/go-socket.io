@@ -4,11 +4,11 @@ import (
 	"log"
 	"net/http"
 
-	socketio "github.com/googollee/go-socket.io"
-	"github.com/googollee/go-socket.io/engineio"
-	"github.com/googollee/go-socket.io/engineio/transport"
-	"github.com/googollee/go-socket.io/engineio/transport/polling"
-	"github.com/googollee/go-socket.io/engineio/transport/websocket"
+	socketio "github.com/thisismz/go-socket.io"
+	"github.com/thisismz/go-socket.io/engineio"
+	"github.com/thisismz/go-socket.io/engineio/transport"
+	"github.com/thisismz/go-socket.io/engineio/transport/polling"
+	"github.com/thisismz/go-socket.io/engineio/transport/websocket"
 )
 
 // Easier to get running with CORS. Thanks for help @Vindexus and @erkie
