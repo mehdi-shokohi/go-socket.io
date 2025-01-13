@@ -34,9 +34,9 @@ func NewClient(uri string, opts *engineio.Options) (*Client, error) {
 	namespace := url.Path
 
 	// Not allowing other than default
-	url.Path = path.Join("/socket.io", namespace)
+	url.Path = path.Join("", namespace)
 	url.Path = url.EscapedPath()
-	if strings.HasSuffix(url.Path, "socket.io") {
+	if strings.HasSuffix(url.Path, "") {
 		url.Path += "/"
 	}
 
