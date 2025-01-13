@@ -9,7 +9,7 @@ import (
 
 	"github.com/thisismz/go-socket.io/engineio"
 	"github.com/thisismz/go-socket.io/engineio/transport"
-	"github.com/thisismz/go-socket.io/engineio/transport/polling"
+	"github.com/thisismz/go-socket.io/engineio/transport/websocket"
 	"github.com/thisismz/go-socket.io/logger"
 	"github.com/thisismz/go-socket.io/parser"
 )
@@ -55,7 +55,7 @@ func NewClient(uri string, opts *engineio.Options) (*Client, error) {
 
 func (s *Client) Connect() error {
 	dialer := engineio.Dialer{
-		Transports: []transport.Transport{polling.Default},
+		Transports: []transport.Transport{websocket.Default},
 	}
 	enginioCon, err := dialer.Dial(s.url, nil)
 	if err != nil {

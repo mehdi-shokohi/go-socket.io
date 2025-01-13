@@ -3,7 +3,7 @@ package websocket
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+
 	"sync"
 	"time"
 
@@ -85,7 +85,7 @@ func (r rcWrapper) Close() error {
 	close(r.quitNag)
 
 	// Attempt to drain the Reader.
-	_, err := io.Copy(ioutil.Discard, r)
+	_, err := io.Copy(io.Discard, r)
 
 	return err
 }
