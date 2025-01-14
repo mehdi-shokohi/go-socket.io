@@ -90,7 +90,7 @@ func (e *Encoder) writePacket(w io.WriteCloser, h Header, args []interface{}) ([
 	if len(buffers) > 0 && (h.Type == Event || h.Type == Ack) {
 		h.Type += 3
 	}
-
+		
 	if err := bw.WriteByte(byte(h.Type + '0')); err != nil {
 		return nil, err
 	}

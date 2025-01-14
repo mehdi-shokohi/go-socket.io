@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
-	"strings"
+
 
 	"github.com/thisismz/go-socket.io/engineio"
 	"github.com/thisismz/go-socket.io/engineio/transport"
@@ -34,11 +34,11 @@ func NewClient(uri string, opts *engineio.Options) (*Client, error) {
 	namespace := url.Path
 
 	// Not allowing other than default
-	url.Path = path.Join("", namespace)
+	url.Path = path.Join("/", namespace)
 	url.Path = url.EscapedPath()
-	if strings.HasSuffix(url.Path, "") {
-		url.Path += "/"
-	}
+	// if strings.HasSuffix(url.Path, "") {
+	// 	url.Path += "/"
+	// }
 
 	client := &Client{
 		conn:      nil,
